@@ -1,7 +1,5 @@
 {
-  "https://webscraper.io/test-sites/e-commerce/allinone": [
-    "https://webscraper.io/test-sites/e-commerce/allinone/product/90",
-    "https://webscraper.io/test-sites/e-commerce/allinone/product/41",
-    "https://webscraper.io/test-sites/e-commerce/allinone/product/135"
+  "https://www.amazon.com/s?i=computers&rh=n%3A565108": [
+    "https://www.amazon.com/gp/product/B0CXKXNNPX/ref=s9_bw_cg_MIIYD_1a1_w"
   ]
 }

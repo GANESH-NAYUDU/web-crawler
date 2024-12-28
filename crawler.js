@@ -46,7 +46,7 @@ const extractUrls = (html, baseUrl) => {
         const href = $(element).attr('href');
         if (href) {
             try {
-                const fullUrl = normalizeUrl(baseUrl, href);
+                const fullUrl = normalizeUrl(baseUrl, href.split('#')[0].split('?')[0]);
                 links.add(fullUrl);
             } catch {
                 console.error(`Invalid URL ignored: ${href}`);
@@ -63,51 +63,67 @@ const crawlWebsites = async (domains) => {
     const cluster = await Cluster.launch({
         concurrency: Cluster.CONCURRENCY_PAGE,
         maxConcurrency: 5,
-        puppeteerOptions: { headless: true },
+        puppeteerOptions: {
+            headless: false, // Run in visible mode for debugging
+            args: ['--no-sandbox', '--disable-setuid-sandbox'],
+        },
     });
 
-    const results = {}; // Store results for all domains
+    const results = {}; // Store product URLs for each domain
+    const visited = new Set(); // Track visited URLs to avoid loops
 
-    // Task function to process each URL
+    // Define the task function for the cluster
     await cluster.task(async ({ page, data: url }) => {
+        if (visited.has(url)) return; // Skip already visited URLs
+        visited.add(url); // Mark as visited
+
         console.log(`Visiting URL: ${url}`);
         try {
-            // Visit the page and get content
+            // Set user agent for bot detection evasion
+            await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36');
+
+            // Add random delay to mimic human behavior
+            const delay = Math.random() * 3000 + 2000; // 2-5 seconds delay
+            await new Promise((resolve) => setTimeout(resolve, delay));
+
+            // Visit the page
             await page.goto(url, { waitUntil: 'domcontentloaded' });
             const html = await page.content();
 
-            // Extract URLs from the page
+            // Extract URLs
             const urls = extractUrls(html, url);
             console.log(`Extracted URLs from ${url}:`, urls);
 
             for (const link of urls) {
-                // If it's a product URL, add it to the results
                 if (isProductUrl(link)) {
                     console.log(`Found product URL: ${link}`);
-                    results[url] = results[url] || new Set(); // Initialize if undefined
+                    results[url] = results[url] || new Set();
                     results[url].add(link); // Add product URL
+                } else if (link.startsWith(url)) {
+                    console.log(`Queuing URL: ${link}`);
+                    await cluster.queue(link); // Queue nested URLs
                 }
             }
-        } catch (error) {
-            console.error(`Error visiting ${url}:`, error.message);
+        } catch (err) {
+            console.error(`Error visiting ${url}:`, err.message);
         }
     });
 
-    // Initialize results for each domain and start crawling
+    // Start crawling for each domain
     for (const domain of domains) {
         console.log(`Crawling ${domain}...`);
-        await cluster.queue(domain); // Start with the initial domain
+        await cluster.queue(domain); // Add the domain to the cluster queue
     }
 
     await cluster.idle(); // Wait for all tasks to finish
     await cluster.close(); // Close the cluster
 
-    // Convert Sets to Arrays for saving
+    // Convert Sets to Arrays for final results
     for (const key in results) {
         results[key] = Array.from(results[key]);
     }
 
-    // Save results to file
+    // Save results to a JSON file
     const fs = require('fs');
     fs.writeFileSync('./productUrls.json', JSON.stringify(results, null, 2));
     console.log('Results saved to ./productUrls.json');
