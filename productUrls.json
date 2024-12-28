@@ -1,5 +1,7 @@
 {
-  "https://www.amazon.com/s?i=computers&rh=n%3A565108": [
-    "https://www.amazon.com/gp/product/B0CXKXNNPX/ref=s9_bw_cg_MIIYD_1a1_w"
+  "https://webscraper.io/test-sites/e-commerce/allinone/phones": [
+    "https://webscraper.io/test-sites/e-commerce/allinone/product/7",
+    "https://webscraper.io/test-sites/e-commerce/allinone/product/9",
+    "https://webscraper.io/test-sites/e-commerce/allinone/product/3"
   ]
 }

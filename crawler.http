@@ -7,6 +7,6 @@ Content-Type: application/json
 
 {
     
-  "domains": ["https://www.amazon.com/s?i=computers&rh=n%3A565108"]
+  "domains": ["https://webscraper.io/test-sites/e-commerce/allinone/phones"]
 
 }
